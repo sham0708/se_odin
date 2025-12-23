@@ -89,8 +89,8 @@ const App: React.FC = () => {
         return;
       } 
 
-      if (cmd.includes('ask') || cmd.includes('tell didi')) {
-        const parts = cmd.includes('ask') ? cmd.split('ask') : cmd.split('tell didi');
+      if (cmd.includes('ask') || cmd.includes('tell muninn')) {
+        const parts = cmd.includes('ask') ? cmd.split('ask') : cmd.split('tell muninn');
         const query = parts[parts.length - 1].trim();
         if (query) {
           setCurrentTab(AppState.CHAT);
@@ -99,14 +99,14 @@ const App: React.FC = () => {
           return;
         } else {
           setCurrentTab(AppState.CHAT);
-          speechService.speak("Didi is listening.");
+          speechService.speak("Muninn is listening.");
           return;
         }
       }
 
-      if (cmd.includes('chat') || cmd.includes('didi')) {
+      if (cmd.includes('chat') || cmd.includes('muninn')) {
         setCurrentTab(AppState.CHAT);
-        speechService.speak("Didi initialized.");
+        speechService.speak("Muninn initialized.");
         hapticService.vibrate('low');
         return;
       }

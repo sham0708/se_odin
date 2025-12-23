@@ -12,7 +12,7 @@ interface DidiChatProps {
 
 export const DidiChat: React.FC<DidiChatProps> = ({ externalChat }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'model', text: 'Hi! I am Didi, your ODIN assistant.\n\nI am listening. Just say "ODIN, ask Didi..." from any screen to talk to me.' }
+    { role: 'model', text: 'Hi! I am Muninn, your ODIN assistant.\n\nI am listening. Just say "ODIN, ask Muninn..." from any screen to talk to me.' }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -54,7 +54,7 @@ export const DidiChat: React.FC<DidiChatProps> = ({ externalChat }) => {
       }
 
       const result = await geminiService.queryLocation(
-        `Answer as Didi (ODIN assistant). User query: ${userText}`,
+        `Answer as Muninn (ODIN assistant). User query: ${userText}`,
         lat,
         lng
       );
@@ -84,7 +84,7 @@ export const DidiChat: React.FC<DidiChatProps> = ({ externalChat }) => {
           </svg>
         </div>
         <div>
-          <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Didi Chat</h2>
+          <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Muninn Chat</h2>
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hands-Free Active</p>
@@ -109,7 +109,7 @@ export const DidiChat: React.FC<DidiChatProps> = ({ externalChat }) => {
         <div className="flex items-center gap-2 bg-slate-50 p-2.5 rounded-[24px] border border-slate-200">
           <input 
             type="text" 
-            placeholder="Just say 'ODIN, ask Didi...'"
+            placeholder="Just say 'ODIN, ask Muninn...'"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}

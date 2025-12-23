@@ -21,8 +21,8 @@ const steps: GuideStep[] = [
   },
   { 
     targetId: 'nav-chat', 
-    title: 'Hands-Free Didi', 
-    description: 'Ask questions by saying "ODIN, ASK DIDI" or "TELL DIDI". You can also simply say "CHAT" or "DIDI" to switch to the assistant view instantly.' 
+    title: 'Hands-Free Muninn', 
+    description: 'Ask questions by saying "ODIN, ASK MUNINN" or "TELL MUNINN". You can also simply say "CHAT" or "MUNINN" to switch to the assistant view instantly.' 
   },
   { 
     targetId: 'nav-settings', 
