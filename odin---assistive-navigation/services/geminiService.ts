@@ -13,7 +13,7 @@ export class GeminiService {
         contents: {
           parts: [
             { inlineData: { mimeType: 'image/jpeg', data: base64Image } },
-            { text: "Act as a navigation assistant for a blind person. Identify all immediate physical obstacles, terrain changes (stairs, curbs), or people. For each, give a clear label, approximate distance in meters, and direction as a clock number (1-12 where 12 is straight, 3 is right, etc.). Also assign a severity: 'high' for immediate collision, 'medium' for nearby objects, 'low' for distant path clearers." }
+            { text: "Act as a navigation assistant for a blind person. Identify all immediate physical obstacles, terrain changes (stairs, curbs), or people. For each, give a clear label, approximate distance in meters, and direction as a clock number (1-12 where 12 is straight, 3 is right, etc.). Also assign a severity: 'high' for immediate collision, 'medium' for nearby objects, 'low' for distant path clearers. Output valid JSON array only." }
           ]
         },
         config: {
@@ -37,7 +37,11 @@ export class GeminiService {
       // Directly access .text property
       const text = response.text;
       return JSON.parse(text || "[]");
-    } catch (error) {
+    } catch (error: any) {
+      // Check for quota exhaustion (429) or other API errors
+      if (error?.message?.includes('429') || error?.status === 429 || error?.message?.includes('quota')) {
+        throw new Error('QUOTA_EXHAUSTED');
+      }
       console.error("Gemini Analysis Error:", error);
       return [];
     }
@@ -69,7 +73,10 @@ export class GeminiService {
         text: response.text,
         grounding: response.candidates?.[0]?.groundingMetadata?.groundingChunks
       };
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.message?.includes('429') || error?.status === 429 || error?.message?.includes('quota')) {
+        throw new Error('QUOTA_EXHAUSTED');
+      }
       console.error("Location Query Error:", error);
       return { text: "I'm having trouble accessing map data right now.", grounding: [] };
     }

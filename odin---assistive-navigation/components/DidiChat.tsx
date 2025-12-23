@@ -62,8 +62,14 @@ export const DidiChat: React.FC<DidiChatProps> = ({ externalChat }) => {
       const responseText = result.text || "I'm sorry, I couldn't process that.";
       setMessages(prev => [...prev, { role: 'model', text: responseText }]);
       speechService.speak(responseText);
-    } catch (e) {
-      setMessages(prev => [...prev, { role: 'model', text: "Connection error." }]);
+    } catch (e: any) {
+      if (e.message === 'QUOTA_EXHAUSTED') {
+        const msg = "My neural circuits are a bit busy right now. Please wait a few moments before asking again.";
+        setMessages(prev => [...prev, { role: 'model', text: msg }]);
+        speechService.speak(msg);
+      } else {
+        setMessages(prev => [...prev, { role: 'model', text: "Connection error. Please try again." }]);
+      }
     } finally {
       setLoading(false);
     }
@@ -92,7 +98,7 @@ export const DidiChat: React.FC<DidiChatProps> = ({ externalChat }) => {
             <div className={`max-w-[85%] p-5 rounded-[28px] shadow-sm ${
               m.role === 'user' ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-slate-800 rounded-bl-none border border-slate-100'
             }`}>
-              <div className="text-sm font-bold leading-relaxed">{m.text}</div>
+              <div className="text-sm font-bold leading-relaxed whitespace-pre-wrap">{m.text}</div>
             </div>
           </div>
         ))}

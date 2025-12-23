@@ -10,6 +10,7 @@ class VoiceService {
   private onSpeechDetected: SpeechDetectionCallback | null = null;
   private restartTimeout: number | null = null;
   private onCommandCallback: VoiceCommandCallback | null = null;
+  private isActive: boolean = false;
 
   constructor() {
     this.initSingleRec();
@@ -36,10 +37,11 @@ class VoiceService {
     this.isProcessing = true;
     this.isListeningForPhrase = true;
 
+    // Temporarily pause global listener to avoid collision
     await this.stopGlobalListenerAsync();
 
     return new Promise((resolve) => {
-      this.recognition.onstart = () => console.debug('VoiceService: Single phrase listening');
+      this.recognition.onstart = () => console.debug('VoiceService: Capturing individual phrase...');
       this.recognition.onresult = (event: any) => resolve(event.results[0][0].transcript);
       this.recognition.onerror = (event: any) => {
         if (event.error !== 'no-speech' && event.error !== 'aborted') {
@@ -50,6 +52,7 @@ class VoiceService {
       this.recognition.onend = () => {
         this.isListeningForPhrase = false;
         this.isProcessing = false;
+        // Resume background sensing
         setTimeout(() => this.resumeGlobalListener(), 400);
       };
 
@@ -81,7 +84,7 @@ class VoiceService {
   }
 
   private resumeGlobalListener() {
-    if (this.globalRec && !this.isListeningForPhrase && !this.isProcessing) {
+    if (this.globalRec && !this.isListeningForPhrase && !this.isProcessing && this.isActive) {
       try {
         this.globalRec.start();
       } catch (e) {
@@ -92,9 +95,19 @@ class VoiceService {
 
   public startGlobalListener(onCommand: VoiceCommandCallback) {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
+    if (!SpeechRecognition) {
+      console.warn("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    // Security check: Web Speech API continuous mode requires HTTPS on most browsers
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+      console.warn("Voice commands might be restricted over non-HTTPS connections.");
+    }
 
     this.onCommandCallback = onCommand;
+    this.isActive = true;
+
     if (this.globalRec) return;
 
     this.globalRec = new SpeechRecognition();
@@ -104,19 +117,22 @@ class VoiceService {
 
     this.globalRec.onresult = (event: any) => {
       if (this.onSpeechDetected) this.onSpeechDetected();
+      
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
           const transcript = event.results[i][0].transcript.toLowerCase();
+          console.debug('ODIN Final Transcript:', transcript);
           if (this.onCommandCallback) this.onCommandCallback(transcript);
         }
       }
     };
 
     this.globalRec.onend = () => {
-      if (!this.isListeningForPhrase && !this.isProcessing) {
+      // Auto-restart if we are still supposed to be active
+      if (this.isActive && !this.isListeningForPhrase && !this.isProcessing) {
         if (this.restartTimeout) window.clearTimeout(this.restartTimeout);
         this.restartTimeout = window.setTimeout(() => {
-          if (!this.isListeningForPhrase && !this.isProcessing) {
+          if (this.isActive && !this.isListeningForPhrase && !this.isProcessing) {
             try {
               this.globalRec.start();
             } catch (e) {}
@@ -126,18 +142,23 @@ class VoiceService {
     };
 
     this.globalRec.onerror = (event: any) => {
-      if (event.error === 'aborted' || event.error === 'not-allowed') return;
-      console.debug('VoiceService Global Rec Error:', event.error);
+      // Handle common errors like 'network' or 'no-speech' gracefully to prevent service death
+      if (event.error === 'aborted' || event.error === 'not-allowed') {
+        this.isActive = false;
+        return;
+      }
+      console.debug('ODIN Sensing Error:', event.error);
     };
 
     try {
       this.globalRec.start();
     } catch (e) {
-      console.error('VoiceService: Global start failed', e);
+      console.error('VoiceService: Failed to start global listener.', e);
     }
   }
 
   public stopGlobalListener() {
+    this.isActive = false;
     if (this.globalRec) {
       try {
         this.globalRec.stop();

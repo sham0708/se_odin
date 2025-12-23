@@ -56,120 +56,118 @@ const App: React.FC = () => {
     speechService.setConfig(prefs.voiceVolume, prefs.voiceRate);
   }, [prefs]);
 
-  useEffect(() => {
-    const activeStates = [
-      AppState.SCANNING, AppState.MAP, AppState.CHAT, 
-      AppState.SETTINGS, AppState.HELP, AppState.FEEDBACK, AppState.ABOUT
-    ];
+  // Voice command logic centralized
+  const handleVoiceCommand = useCallback((command: string) => {
+    const cmd = command.trim().toLowerCase();
+    const hasWakeWord = cmd.includes('odin');
+    
+    if (hasWakeWord) {
+      // Home / Back / Go to home page commands
+      if (cmd.includes('back') || cmd.includes('return') || cmd.includes('home') || cmd.includes('go to home page')) {
+        setCurrentTab(AppState.SCANNING);
+        speechService.speak("Returning home.");
+        hapticService.vibrate('low');
+        return;
+      }
 
-    if (activeStates.includes(appState) || appState === AppState.LOGIN) {
+      if (cmd.includes('search for') || cmd.includes('go to')) {
+        const parts = cmd.includes('search for') ? cmd.split('search for') : cmd.split('go to');
+        const target = parts[parts.length - 1].trim();
+        if (target) {
+          setCurrentTab(AppState.MAP);
+          setExternalSearch({ query: target, timestamp: Date.now() });
+          speechService.speak(`Searching for ${target}.`);
+          hapticService.vibrate('low');
+          return;
+        }
+      }
+
+      if (cmd.includes('maps') || cmd.includes('navigation') || cmd.includes('directions')) {
+        setCurrentTab(AppState.MAP);
+        speechService.speak("Opening maps.");
+        hapticService.vibrate('low');
+        return;
+      } 
+
+      if (cmd.includes('ask') || cmd.includes('tell didi')) {
+        const parts = cmd.includes('ask') ? cmd.split('ask') : cmd.split('tell didi');
+        const query = parts[parts.length - 1].trim();
+        if (query) {
+          setCurrentTab(AppState.CHAT);
+          setExternalChat({ query, timestamp: Date.now() });
+          hapticService.vibrate('low');
+          return;
+        } else {
+          setCurrentTab(AppState.CHAT);
+          speechService.speak("Didi is listening.");
+          return;
+        }
+      }
+
+      if (cmd.includes('chat') || cmd.includes('didi')) {
+        setCurrentTab(AppState.CHAT);
+        speechService.speak("Didi initialized.");
+        hapticService.vibrate('low');
+        return;
+      }
+
+      if (cmd.includes('initialize') || cmd.includes('start scan') || cmd.includes('vision')) {
+        setCurrentTab(AppState.SCANNING);
+        setIsScanning(true);
+        speechService.speak("Vision engine active.");
+        hapticService.vibrate('low');
+        return;
+      } 
+
+      if (cmd.includes('stop') || cmd.includes('terminate')) {
+        if (isScanningRef.current) {
+          setIsScanning(false);
+          speechService.speak("Scanner stopped.");
+        }
+        hapticService.vibrate('low');
+        return;
+      }
+
+      if (cmd.includes('personalize') || cmd.includes('settings')) {
+        setCurrentTab(AppState.SETTINGS);
+        speechService.speak("Opening configuration.");
+        return;
+      }
+      
+      if (cmd.includes('help') || cmd.includes('support')) {
+        setCurrentTab(AppState.HELP);
+        speechService.speak("Help center active.");
+        return;
+      }
+      
+      if (cmd.includes('feedback') || cmd.includes('report')) {
+        setCurrentTab(AppState.FEEDBACK);
+        speechService.speak("Opening feedback.");
+        return;
+      }
+
+      if (cmd.includes('louder') || cmd.includes('increase volume')) {
+        setPrefs(p => ({ ...p, voiceVolume: Math.min(1, p.voiceVolume + 0.2) }));
+        speechService.speak("Volume increased.");
+      } else if (cmd.includes('quieter') || cmd.includes('decrease volume')) {
+        setPrefs(p => ({ ...p, voiceVolume: Math.max(0, p.voiceVolume - 0.2) }));
+        speechService.speak("Volume decreased.");
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (appState !== AppState.SPLASH && appState !== AppState.LOGIN) {
       voiceService.setOnSpeechDetected(() => {
         setIsVoiceDetecting(true);
         setTimeout(() => setIsVoiceDetecting(false), 800);
       });
-
-      voiceService.startGlobalListener((command) => {
-        const cmd = command.trim().toLowerCase();
-        const hasWakeWord = cmd.includes('odin');
-        
-        if (hasWakeWord) {
-          // Home / Back commands
-          if (cmd.includes('back') || cmd.includes('return') || cmd.includes('home') || cmd.includes('go to home page')) {
-            setCurrentTab(AppState.SCANNING);
-            speechService.speak("Returning to main dashboard.");
-            hapticService.vibrate('low');
-            return;
-          }
-
-          if (cmd.includes('search for') || cmd.includes('go to')) {
-            const parts = cmd.includes('search for') ? cmd.split('search for') : cmd.split('go to');
-            const target = parts[parts.length - 1].trim();
-            if (target) {
-              setCurrentTab(AppState.MAP);
-              setExternalSearch({ query: target, timestamp: Date.now() });
-              speechService.speak(`Searching for ${target}.`);
-              hapticService.vibrate('low');
-              return;
-            }
-          }
-
-          if (cmd.includes('maps') || cmd.includes('navigation') || cmd.includes('directions')) {
-            setCurrentTab(AppState.MAP);
-            speechService.speak("Opening maps.");
-            hapticService.vibrate('low');
-            return;
-          } 
-
-          if (cmd.includes('ask') || cmd.includes('tell didi')) {
-            const parts = cmd.includes('ask') ? cmd.split('ask') : cmd.split('tell didi');
-            const query = parts[parts.length - 1].trim();
-            if (query) {
-              setCurrentTab(AppState.CHAT);
-              setExternalChat({ query, timestamp: Date.now() });
-              hapticService.vibrate('low');
-              return;
-            } else {
-              setCurrentTab(AppState.CHAT);
-              speechService.speak("Didi is listening.");
-              return;
-            }
-          }
-
-          if (cmd.includes('chat') || cmd.includes('didi')) {
-            setCurrentTab(AppState.CHAT);
-            speechService.speak("Didi initialized.");
-            hapticService.vibrate('low');
-            return;
-          }
-
-          if (cmd.includes('initialize') || cmd.includes('start scan') || cmd.includes('vision')) {
-            setCurrentTab(AppState.SCANNING);
-            setIsScanning(true);
-            speechService.speak("Vision engine active.");
-            hapticService.vibrate('low');
-            return;
-          } 
-
-          if (cmd.includes('stop') || cmd.includes('terminate')) {
-            if (isScanningRef.current) {
-              setIsScanning(false);
-              speechService.speak("Scanner stopped.");
-            }
-            hapticService.vibrate('low');
-            return;
-          }
-
-          if (cmd.includes('personalize') || cmd.includes('settings')) {
-            setCurrentTab(AppState.SETTINGS);
-            speechService.speak("Opening configuration.");
-            return;
-          }
-          if (cmd.includes('help') || cmd.includes('support')) {
-            setCurrentTab(AppState.HELP);
-            speechService.speak("Opening help center.");
-            return;
-          }
-          if (cmd.includes('feedback') || cmd.includes('report')) {
-            setCurrentTab(AppState.FEEDBACK);
-            speechService.speak("Opening feedback.");
-            return;
-          }
-
-          if (cmd.includes('louder') || cmd.includes('increase volume')) {
-            setPrefs(p => ({ ...p, voiceVolume: Math.min(1, p.voiceVolume + 0.2) }));
-            speechService.speak("Volume increased.");
-          } else if (cmd.includes('quieter') || cmd.includes('decrease volume')) {
-            setPrefs(p => ({ ...p, voiceVolume: Math.max(0, p.voiceVolume - 0.2) }));
-            speechService.speak("Volume decreased.");
-          }
-        }
-      });
+      voiceService.startGlobalListener(handleVoiceCommand);
     }
-
     return () => {
       voiceService.stopGlobalListener();
     };
-  }, [appState]);
+  }, [appState, handleVoiceCommand]);
 
   const triggerNotification = useCallback((title: string, message: string) => {
     setNotification({ title, message });
@@ -179,7 +177,7 @@ const App: React.FC = () => {
   const handleLogin = () => {
     setAppState(AppState.SCANNING);
     setShowWalkthrough(true);
-    speechService.speak("Session initialized. I am always listening for your commands starting with the word ODIN.");
+    speechService.speak("Connection established. ODIN sensing active.");
   };
 
   const revisitGuide = () => {

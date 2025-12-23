@@ -73,27 +73,58 @@ export const Walkthrough: React.FC<Props> = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[1000] cursor-pointer" onClick={() => next()}>
-      <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-[1px] transition-all duration-500" />
+      {/* 
+        Clearer Highlight Strategy:
+        We remove the full-screen backdrop-blur div entirely to ensure 
+        the highlighted feature is 100% sharp. 
+      */}
+      
+      {/* 
+        Spotlight Overlay:
+        Using a huge ring to dim the rest of the screen while keeping the 
+        center (the feature) perfectly clear and un-shadowed.
+      */}
       <div 
-        className="absolute bg-transparent ring-[4000px] ring-slate-950/80 rounded-[32px] pointer-events-none border-2 border-blue-500 shadow-[0_0_50px_rgba(59,130,246,0.4)] transition-all duration-500"
-        style={{ width: highlightRect.width + 12, height: highlightRect.height + 12, left: highlightRect.left - 6, top: highlightRect.top - 6 }}
-      />
-      <div 
-        className="absolute z-[1001] p-6 bg-white text-slate-900 rounded-[28px] shadow-2xl pointer-events-none w-[260px] border border-blue-100 animate-in zoom-in slide-in-from-bottom-4 duration-300"
+        className="absolute bg-transparent ring-[4000px] ring-slate-900/60 rounded-[24px] pointer-events-none border-2 border-blue-400/50 shadow-[0_0_40px_rgba(59,130,246,0.3)] transition-all duration-500 z-[1001]"
         style={{ 
-          left: Math.max(20, Math.min(window.innerWidth - 280, highlightRect.left - 20)), 
-          top: isBottom ? highlightRect.bottom + 24 : highlightRect.top - 200 
+          width: highlightRect.width + 12, 
+          height: highlightRect.height + 12, 
+          left: highlightRect.left - 6, 
+          top: highlightRect.top - 6 
+        }}
+      />
+
+      {/* 
+        Transparent Floating Box (Ultra-Glassmorphism):
+        Using higher transparency (white/30) and strong backdrop blur for the box itself 
+        without affecting the feature.
+      */}
+      <div 
+        className="absolute z-[1002] p-6 bg-white/30 backdrop-blur-2xl text-slate-900 rounded-[32px] shadow-2xl pointer-events-none w-[280px] border border-white/40 animate-in zoom-in slide-in-from-bottom-4 duration-500"
+        style={{ 
+          left: Math.max(20, Math.min(window.innerWidth - 300, highlightRect.left - 20)), 
+          top: isBottom ? highlightRect.bottom + 40 : highlightRect.top - 260 
         }}
       >
         <div className="relative space-y-4">
-          <div className={`absolute ${isBottom ? '-top-8' : '-bottom-8'} left-8 w-4 h-4 bg-white rotate-45 border-t border-l border-blue-100 hidden sm:block`} />
-          <div className="px-3 py-1 bg-blue-600 text-white rounded-full text-[7px] font-black uppercase tracking-widest w-fit">STEP {activeStep + 1} / {steps.length}</div>
-          <div className="space-y-2">
-            <h3 className="text-lg font-black uppercase leading-tight text-blue-600 tracking-tight">{steps[activeStep].title}</h3>
-            <p className="text-[11px] font-bold leading-relaxed text-slate-500">{steps[activeStep].description}</p>
+          <div className="flex justify-between items-center">
+            <div className="px-3 py-1 bg-blue-600/60 backdrop-blur-md text-white rounded-full text-[8px] font-black uppercase tracking-[0.2em] w-fit shadow-lg">
+              STEP {activeStep + 1} OF {steps.length}
+            </div>
+            <div className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
           </div>
-          <div className="pt-3 border-t border-slate-50 flex justify-between items-center text-[7px] font-black uppercase tracking-widest text-slate-300">
-            <span>Progressing</span>
+
+          <div className="space-y-2">
+            <h3 className="text-xl font-black uppercase leading-tight text-slate-900 tracking-tight">
+              {steps[activeStep].title}
+            </h3>
+            <p className="text-[12px] font-bold leading-relaxed text-slate-800 drop-shadow-sm">
+              {steps[activeStep].description}
+            </p>
+          </div>
+
+          <div className="pt-4 border-t border-slate-900/10 flex justify-between items-center text-[8px] font-black uppercase tracking-[0.2em] text-blue-700">
+            <span className="opacity-60">System Ready</span>
             <span className="animate-pulse">Tap to continue</span>
           </div>
         </div>
