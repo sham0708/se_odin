@@ -1,0 +1,10 @@
+
+{
+  "name": "ODIN - Assistive Navigation",
+  "description": "An AI-powered Obstacle Detection and Intelligent Navigation aid designed for the legally blind, featuring real-time computer vision, ultrasonic sensing fusion, and multi-modal feedback.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
